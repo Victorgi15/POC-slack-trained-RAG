@@ -1,135 +1,153 @@
-Projet Qdrant Docker
-Ce projet configure un environnement Docker pour exécuter Qdrant, une base de données vectorielle de type "search engine". L'objectif est de mettre en place un service Qdrant en utilisant Docker Compose et de gérer l'environnement à l'aide d'un fichier .env pour les paramètres de configuration.
+````markdown
+# Projet Qdrant Docker
 
-📋 Prérequis
+Ce projet configure un environnement Docker pour exécuter Qdrant, une base de données vectorielle de type "search engine". L'objectif est de mettre en place un service Qdrant en utilisant **Docker Compose** et de gérer l'environnement à l'aide d'un fichier `.env` pour les paramètres de configuration.
+
+## 📋 Prérequis
+
 Avant de commencer, vous devez avoir installé :
 
-Docker : Téléchargez Docker
+- **Docker** : [Téléchargez Docker](https://www.docker.com/get-started)
+- **Docker Compose** : Il est inclus avec Docker Desktop sur Windows.
 
-Docker Compose : Il est inclus avec Docker Desktop sur Windows.
+## 🚀 Configuration
 
-🚀 Configuration
+### 1. **Clonez ce projet**
 
-1. Clonez ce projet
-   Si ce projet n'a pas encore été cloné, clonez-le depuis GitHub :
+Si ce projet n'a pas encore été cloné, clonez-le depuis GitHub :
 
-bash
-Copier
-Modifier
+```bash
 git clone https://github.com/Victorgi15/My_first-RAG.git
-cd My_first-RAG 2. Configurer le fichier .env
-Dans la racine de votre projet, créez un fichier .env pour stocker les variables d'environnement nécessaires à la configuration de Qdrant.
+cd My_first-RAG
+```
+````
 
-Voici un exemple de ce que pourrait contenir ton fichier .env :
+### 2. **Configurer le fichier `.env`**
 
-env
-Copier
-Modifier
+Dans la racine de votre projet, créez un fichier `.env` pour stocker les variables d'environnement nécessaires à la configuration de Qdrant.
+
+Voici un exemple de ce que pourrait contenir ton fichier `.env` :
+
+```env
 QDRANT_API_KEY=superclesecrete123
 QDRANT_PORT=6333
-Variables :
+```
 
-QDRANT_API_KEY : La clé API pour authentifier les requêtes vers Qdrant.
+**Variables :**
 
-QDRANT_PORT : Le port sur lequel Qdrant sera accessible.
+- **QDRANT_API_KEY** : La clé API pour authentifier les requêtes vers Qdrant.
+- **QDRANT_PORT** : Le port sur lequel Qdrant sera accessible.
 
-3. Configurer Docker Compose
-   Dans ton projet, tu devrais avoir un fichier docker-compose.yml qui configure Qdrant avec Docker. Voici un exemple simple :
+### 3. **Configurer Docker Compose**
 
-yaml
-Copier
-Modifier
-version: '3.7'
+Dans ton projet, tu devrais avoir un fichier `docker-compose.yml` qui configure Qdrant avec Docker. Voici un exemple simple :
+
+```yaml
+version: "3.7"
 
 services:
-qdrant:
-image: qdrant/qdrant:latest
-environment: - SERVICE*FQDN_QDRANT*${QDRANT_PORT:-6333}
+  qdrant:
+    image: qdrant/qdrant:latest
+    environment:
+      - SERVICE_FQDN_QDRANT_${QDRANT_PORT:-6333}
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
-ports: - ${QDRANT_PORT:-6333}:${QDRANT_PORT:-6333}
-volumes: - "qdrant_data:/qdrant/storage"
-healthcheck:
-test: - CMD-SHELL - bash -c ':> /dev/tcp/127.0.0.1/${QDRANT_PORT:-6333}' || exit 1
-interval: 5s
-timeout: 5s
-retries: 3
+    ports:
+      - ${QDRANT_PORT:-6333}:${QDRANT_PORT:-6333}
+    volumes:
+      - "qdrant_data:/qdrant/storage"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/${QDRANT_PORT:-6333}' || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
 networks:
-backend-network:
-driver: bridge
+  backend-network:
+    driver: bridge
 
 volumes:
-qdrant_data: {}
-Explication :
+  qdrant_data: {}
+```
 
-Ce fichier lance un container Docker pour Qdrant.
+**Explication :**
 
-Il utilise les variables d'environnement définies dans le fichier .env.
+- Ce fichier lance un container Docker pour Qdrant.
+- Il utilise les variables d'environnement définies dans le fichier `.env`.
+- Il mappe le port du container vers ton système pour que tu puisses y accéder.
+- Il configure également un volume pour persister les données de Qdrant.
 
-Il mappe le port du container vers ton système pour que tu puisses y accéder.
+### 4. **Construire et démarrer les containers**
 
-Il configure également un volume pour persister les données de Qdrant.
+Une fois ton fichier `docker-compose.yml` et ton fichier `.env` configurés, tu peux construire et démarrer les containers avec Docker Compose :
 
-4. Construire et démarrer les containers
-   Une fois ton fichier docker-compose.yml et ton fichier .env configurés, tu peux construire et démarrer les containers avec Docker Compose :
-
-bash
-Copier
-Modifier
+```bash
 docker-compose up -d
+```
+
 Cela démarrera le service Qdrant en arrière-plan.
 
-5. Vérifier le service
-   Tu peux vérifier que Qdrant fonctionne correctement en accédant à son API via le port configuré. Par défaut, cela sera accessible à http://localhost:6333.
+### 5. **Vérifier le service**
+
+Tu peux vérifier que Qdrant fonctionne correctement en accédant à son API via le port configuré. Par défaut, cela sera accessible à `http://localhost:6333`.
 
 Utilise la commande suivante pour tester la connexion au service :
 
-bash
-Copier
-Modifier
+```bash
 curl http://localhost:6333
+```
+
 Tu devrais obtenir une réponse de Qdrant, confirmant qu'il fonctionne.
 
-📝 Git et gestion de versions
-Initialisation du dépôt Git
-Initialiser le dépôt Git localement :
+---
 
-bash
-Copier
-Modifier
-git init
-Ajouter un fichier .gitignore pour ignorer les fichiers sensibles comme .env et les configurations spécifiques à l'IDE :
+## 📝 Git et gestion de versions
 
-bash
-Copier
-Modifier
-echo ".env" >> .gitignore
-echo ".env.\*" >> .gitignore
-echo ".vscode/" >> .gitignore
-Faire un commit initial :
+### Initialisation du dépôt Git
 
-bash
-Copier
-Modifier
-git add .
-git commit -m "Initial commit with Docker and Qdrant setup"
-Lier le dépôt local à GitHub
-Crée un dépôt sur GitHub sans fichier README ni .gitignore.
+1. **Initialiser le dépôt Git localement** :
 
-Relie ton dépôt local à GitHub avec :
+   ```bash
+   git init
+   ```
 
-bash
-Copier
-Modifier
-git remote add origin https://github.com/Victorgi15/My_first-RAG.git
-git branch -M main
-git push -u origin main
-💡 Ressources utiles
-Qdrant Documentation
+2. **Ajouter un fichier `.gitignore`** pour ignorer les fichiers sensibles comme `.env` et les configurations spécifiques à l'IDE :
 
-Docker Documentation
+   ```bash
+   echo ".env" >> .gitignore
+   echo ".env.*" >> .gitignore
+   echo ".vscode/" >> .gitignore
+   ```
 
-GitHub Documentation
+3. **Faire un commit initial** :
 
-🎯 Conclusion
+   ```bash
+   git add .
+   git commit -m "Initial commit with Docker and Qdrant setup"
+   ```
+
+### Lier le dépôt local à GitHub
+
+1. Crée un dépôt sur GitHub sans fichier README ni `.gitignore`.
+2. Relie ton dépôt local à GitHub avec :
+
+   ```bash
+   git remote add origin https://github.com/Victorgi15/My_first-RAG.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+---
+
+## 💡 Ressources utiles
+
+- [Qdrant Documentation](https://qdrant.tech/documentation/)
+- [Docker Documentation](https://docs.docker.com/)
+- [GitHub Documentation](https://docs.github.com/en/github)
+
+---
+
+### 🎯 Conclusion
+
 Ce projet vous permet de configurer rapidement Qdrant dans un environnement Docker. Vous pouvez personnaliser le service avec des variables d'environnement et facilement le déployer grâce à Docker Compose.
