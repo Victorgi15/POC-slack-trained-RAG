@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  qdrant:
+    image: "qdrant/qdrant:latest"
+    environment:
+      - SERVICE_FQDN_QDRANT_${QDRANT_PORT:-6333}
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
+    ports:
+      - ${QDRANT_PORT:-6333}:${QDRANT_PORT:-6333}
+    volumes:
+      - "qdrant_data:/qdrant/storage"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/${QDRANT_PORT:-6333}' || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  qdrant_data: {}

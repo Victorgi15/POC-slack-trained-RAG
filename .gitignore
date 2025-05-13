@@ -1,0 +1,6 @@
+# Ne pas versionner les paramètres locaux de VS Code
+.vscode/
+
+# Ne pas versionner les fichiers d'environnement 
+.env
+.env.*
