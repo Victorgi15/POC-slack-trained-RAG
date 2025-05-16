@@ -1,12 +1,12 @@
 import uuid
 import json
-from pathlib import Path
 from typing import List, Dict
-from dotenv import load_dotenv
 import os
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
+from dotenv import load_dotenv
+
 
 # Charger les variables d'environnement
 load_dotenv()
@@ -38,7 +38,8 @@ def group_threads(msgs):
                 by_thread[thread_ts]["answers"].append(msg)
             else:
                 print(
-                    f"Warning: thread {thread_ts} not found for message ts={msg['ts']}"
+                    f"Warning: thread {thread_ts} not found\n"
+                    f"for message ts={msg['ts']}"
                 )
 
     return list(by_thread.values())
@@ -51,9 +52,13 @@ model_name = os.getenv(
 
 
 def embed(text: str) -> List[float]:
-    response = client.embeddings.create(model=model_name, input=text)
-    embedding = response.data[0].embedding
-    return embedding
+    try:
+        response = client.embeddings.create(model=model_name, input=text)
+        embedding = response.data[0].embedding
+        return embedding
+    except Exception as e:
+        print(f"Erreur lors de la création de l'embedding : {e}")
+        return []
 
 
 # Construction des vecteurs
@@ -96,7 +101,7 @@ def main():
 
     # On peut uploader les points en batch (ici par 10 pour éviter les timeout)
     for i in range(0, len(points), 10):
-        batch = points[i : i + 10]
+        batch = points[i:i+10]
         qdrant.upsert(collection_name=collection_name, points=batch)
         print(f"Upserted batch {i // 10 + 1}")
 
