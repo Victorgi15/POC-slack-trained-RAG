@@ -42,7 +42,7 @@ Le projet **génère des embeddings** à partir des threads Slack avec OpenAI (`
 
 ```bash
 git clone <votre_fork_url>
-cd My_first-RAG
+cd POC-slack-trained-RAG
 python -m venv .venv
 source .venv/bin/activate   # ou .\.venv\Scripts\activate sur Windows
 pip install -r requirements.txt
