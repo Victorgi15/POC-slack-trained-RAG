@@ -1,153 +1,120 @@
-````markdown
-# Projet Qdrant Docker
+# Chatbot Support Paroles — Projet Python avec Qdrant & Docker
 
-Ce projet configure un environnement Docker pour exécuter Qdrant, une base de données vectorielle de type "search engine". L'objectif est de mettre en place un service Qdrant en utilisant **Docker Compose** et de gérer l'environnement à l'aide d'un fichier `.env` pour les paramètres de configuration.
+Un prototype Python qui transforme un canal Slack de support en chatbot question-réponse sur des paroles de chanson.  
+Le projet **génère des embeddings** à partir des threads Slack avec OpenAI (`text-embedding-3-small`), stocke les vecteurs dans **Qdrant** via Docker Compose, puis permet de discuter avec GPT en récupérant le contexte le plus pertinent.
 
-## 📋 Prérequis
+---
 
-Avant de commencer, vous devez avoir installé :
+## ✨ Fonctionnalités
 
-- **Docker** : [Téléchargez Docker](https://www.docker.com/get-started)
-- **Docker Compose** : Il est inclus avec Docker Desktop sur Windows.
+- Ingestion du fichier Slack JSON (`lyrics_support_channel.json`), regroupement par thread (questions + réponses)
+- Création d’embeddings 1536 dimensions avec le modèle OpenAI `text-embedding-3-small`
+- Stockage des embeddings dans une collection locale **Qdrant** nommée `lyrics_support_channel`
+- Chatbot CLI léger : recherche hybride dans Qdrant → génération de réponses GPT contextualisées
+- Déploiement local simple avec Docker Compose pour Qdrant
 
-## 🚀 Configuration
+---
 
-### 1. **Clonez ce projet**
+## 🗂️ Structure du projet
 
-Si ce projet n'a pas encore été cloné, clonez-le depuis GitHub :
+```
+.
+├── docker-compose.yml            # Configuration du service Qdrant
+├── embedded-slack-channel.py    # Pipeline d’ingestion et indexation des threads Slack
+├── chatbot.py                   # Chatbot interactif en console
+├── lyrics_support_channel.json  # Transcript Slack exemple
+├── requirements.txt             # Dépendances Python
+└── .env                         # Variables d’environnement (API keys, URLs)
+```
+
+---
+
+## 🚀 Démarrage rapide
+
+### 1. Prérequis
+
+- Python 3.8+
+- Docker & Docker Compose
+- Clé API OpenAI valide
+- Accès Qdrant local (via Docker) ou distant
+
+### 2. Cloner et installer
 
 ```bash
-git clone https://github.com/Victorgi15/My_first-RAG.git
+git clone <votre_fork_url>
 cd My_first-RAG
+python -m venv .venv
+source .venv/bin/activate   # ou .\.venv\Scripts\activate sur Windows
+pip install -r requirements.txt
 ```
-````
 
-### 2. **Configurer le fichier `.env`**
+### 3. Configurer l’environnement
 
-Dans la racine de votre projet, créez un fichier `.env` pour stocker les variables d'environnement nécessaires à la configuration de Qdrant.
-
-Voici un exemple de ce que pourrait contenir ton fichier `.env` :
+Créer un fichier `.env` à la racine :
 
 ```env
-QDRANT_API_KEY=superclesecrete123
+OPENAI_API_KEY=sk-...
+QDRANT_URL=http://localhost:6333
 QDRANT_PORT=6333
+QDRANT_API_KEY=               # Optionnel si Qdrant local sans auth
+OPENAI_MODEL=text-embedding-3-small
 ```
 
-**Variables :**
-
-- **QDRANT_API_KEY** : La clé API pour authentifier les requêtes vers Qdrant.
-- **QDRANT_PORT** : Le port sur lequel Qdrant sera accessible.
-
-### 3. **Configurer Docker Compose**
-
-Dans ton projet, tu devrais avoir un fichier `docker-compose.yml` qui configure Qdrant avec Docker. Voici un exemple simple :
-
-```yaml
-version: "3.7"
-
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    environment:
-      - SERVICE_FQDN_QDRANT_${QDRANT_PORT:-6333}
-      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
-    ports:
-      - ${QDRANT_PORT:-6333}:${QDRANT_PORT:-6333}
-    volumes:
-      - "qdrant_data:/qdrant/storage"
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - bash -c ':> /dev/tcp/127.0.0.1/${QDRANT_PORT:-6333}' || exit 1
-      interval: 5s
-      timeout: 5s
-      retries: 3
-
-networks:
-  backend-network:
-    driver: bridge
-
-volumes:
-  qdrant_data: {}
-```
-
-**Explication :**
-
-- Ce fichier lance un container Docker pour Qdrant.
-- Il utilise les variables d'environnement définies dans le fichier `.env`.
-- Il mappe le port du container vers ton système pour que tu puisses y accéder.
-- Il configure également un volume pour persister les données de Qdrant.
-
-### 4. **Construire et démarrer les containers**
-
-Une fois ton fichier `docker-compose.yml` et ton fichier `.env` configurés, tu peux construire et démarrer les containers avec Docker Compose :
+### 4. Démarrer Qdrant avec Docker Compose
 
 ```bash
 docker-compose up -d
 ```
 
-Cela démarrera le service Qdrant en arrière-plan.
+Qdrant sera accessible sur `http://localhost:6333` par défaut.
 
-### 5. **Vérifier le service**
-
-Tu peux vérifier que Qdrant fonctionne correctement en accédant à son API via le port configuré. Par défaut, cela sera accessible à `http://localhost:6333`.
-
-Utilise la commande suivante pour tester la connexion au service :
+### 5. Indexer les threads Slack
 
 ```bash
-curl http://localhost:6333
+python embedded-slack-channel.py
 ```
 
-Tu devrais obtenir une réponse de Qdrant, confirmant qu'il fonctionne.
+Cela va parser le JSON, créer les embeddings et les insérer dans Qdrant.
+
+### 6. Lancer le chatbot
+
+```bash
+python chatbot.py
+```
+
+Exemple d’interaction :
+
+```
+Bienvenue dans le chatbot support paroles ! Tapez 'exit' pour quitter.
+> Que veut dire cette phrase dans la chanson ?
+→ Réponse : ...
+```
 
 ---
 
-## 📝 Git et gestion de versions
+## 🔧 Personnalisation
 
-### Initialisation du dépôt Git
-
-1. **Initialiser le dépôt Git localement** :
-
-   ```bash
-   git init
-   ```
-
-2. **Ajouter un fichier `.gitignore`** pour ignorer les fichiers sensibles comme `.env` et les configurations spécifiques à l'IDE :
-
-   ```bash
-   echo ".env" >> .gitignore
-   echo ".env.*" >> .gitignore
-   echo ".vscode/" >> .gitignore
-   ```
-
-3. **Faire un commit initial** :
-
-   ```bash
-   git add .
-   git commit -m "Initial commit with Docker and Qdrant setup"
-   ```
-
-### Lier le dépôt local à GitHub
-
-1. Crée un dépôt sur GitHub sans fichier README ni `.gitignore`.
-2. Relie ton dépôt local à GitHub avec :
-
-   ```bash
-   git remote add origin https://github.com/Victorgi15/My_first-RAG.git
-   git branch -M main
-   git push -u origin main
-   ```
+| Élément à modifier               | Fichier concerné                                   |
+| -------------------------------- | -------------------------------------------------- |
+| Nom de la collection Qdrant      | `embedded-slack-channel.py` & `chatbot.py`         |
+| Modèle d’embedding OpenAI        | Fonction d’appel OpenAI dans les deux scripts      |
+| Fichier source des conversations | Remplacer `lyrics_support_channel.json`            |
+| Limite de résultats de recherche | Dans `chatbot.py`, méthode `qdrant.search()`       |
+| Modèle et prompt GPT             | Dans `chatbot.py`, appel `OpenAI chat completions` |
 
 ---
 
-## 💡 Ressources utiles
+## 📜 Licence
 
-- [Qdrant Documentation](https://qdrant.tech/documentation/)
-- [Docker Documentation](https://docs.docker.com/)
-- [GitHub Documentation](https://docs.github.com/en/github)
+Projet sous licence ISC — voir `requirements.txt` ou fichier dédié.
 
 ---
 
-### 🎯 Conclusion
+## 🙏 Remerciements
 
-Ce projet vous permet de configurer rapidement Qdrant dans un environnement Docker. Vous pouvez personnaliser le service avec des variables d'environnement et facilement le déployer grâce à Docker Compose.
+- **OpenAI** pour embeddings et GPT
+- **Qdrant** pour la recherche vectorielle
+- **Docker & Docker Compose** pour l’orchestration locale
+- **Tom Andrieu**, pour ses explications claires sur le fonctionnement des RAG
+
+Ce projet est une démonstration simple et complète de pipeline RAG avec Slack, Qdrant et GPT pour un chatbot support paroles.
